@@ -1,0 +1,30 @@
+{
+    "process": "gptq",
+    "layer": 0,
+    "module": "self_attn.k_proj",
+    "loss": "0.01466181",
+    "samples": "2048",
+    "damp": "0.01000",
+    "time": "4.473",
+    "fwd_time": "131.244"
+}
+{
+    "process": "gptq",
+    "layer": 0,
+    "module": "self_attn.v_proj",
+    "loss": "0.00000669",
+    "samples": "2048",
+    "damp": "0.01000",
+    "time": "3.077",
+    "fwd_time": "131.244"
+}
+{
+    "process": "gptq",
+    "layer": 0,
+    "module": "self_attn.q_proj",
+    "loss": "0.00798897",
+    "samples": "2048",
+    "damp": "0.01000",
+    "time": "3.231",
+    "fwd_time": "131.244"
+}
