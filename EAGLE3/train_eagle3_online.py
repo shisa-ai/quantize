@@ -490,7 +490,11 @@ def main():
         else:
             progress_bar = train_dataloader
 
+        step_token_accum = 0.0
+        step_time_accum = 0.0
+
         for data in progress_bar:
+            iter_start_time = time.time()
             batch_index += 1
             if args.profile:
                 if batch_index == args.profile_start_step:
@@ -543,12 +547,23 @@ def main():
                 )
             for i in range(len(acces)):
                 log_dict[f"train/acc_{i}"] += acces[i] / args.draft_accumulation_steps
+
+            micro_tokens = data["attention_mask"].sum().item()
+            step_token_accum += micro_tokens
+            step_time_accum += time.time() - iter_start_time
+
             if batch_index % args.draft_accumulation_steps == 0:
+                elapsed = max(step_time_accum, 1e-6)
+                global_tokens = step_token_accum * args.dp_size
+                log_dict["train/iter_per_sec"] = 1.0 / elapsed
+                log_dict["train/tokens_per_sec"] = global_tokens / elapsed
                 optimizer.step()
                 global_step += 1
                 if global_step % args.log_steps == 0:
                     tracker.log(log_dict, step=global_step)
                 log_dict = defaultdict(float)
+                step_token_accum = 0.0
+                step_time_accum = 0.0
 
             epoch_acces = [epoch_acces[i] + [acces[i]] for i in range(len(acces))]
             epoch_plosses = [
