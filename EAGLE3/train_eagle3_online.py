@@ -88,6 +88,13 @@ def parse_args():
         default=7,
         help="The length for Test-Time Training (TTT).",
     )
+    parser.add_argument(
+        "--target-dtype",
+        type=str,
+        default="bfloat16",
+        help="Torch dtype for the target model parameters "
+        "(e.g. 'bfloat16', 'float16', 'float8_e4m3fn', or 'auto' to use the model default).",
+    )
 
     # data processing type
     parser.add_argument("--chat-template", type=str, default="llama3")
@@ -198,9 +205,49 @@ def parse_args():
     return parser, args
 
 
+def parse_torch_dtype(dtype_str: str):
+    """Parse a string into a torch.dtype (or None for auto) with a few convenient aliases."""
+    if dtype_str is None:
+        return None
+    dtype_str = dtype_str.lower()
+
+    if dtype_str in {"auto", "none"}:
+        return None
+
+    mapping = {
+        "bfloat16": torch.bfloat16,
+        "bf16": torch.bfloat16,
+        "float16": torch.float16,
+        "fp16": torch.float16,
+        "half": torch.float16,
+        "float32": torch.float32,
+        "fp32": torch.float32,
+    }
+
+    if hasattr(torch, "float8_e4m3fn"):
+        mapping.update(
+            {
+                "float8_e4m3fn": torch.float8_e4m3fn,
+                "fp8_e4m3": torch.float8_e4m3fn,
+            }
+        )
+    if hasattr(torch, "float8_e5m2"):
+        mapping.update(
+            {
+                "float8_e5m2": torch.float8_e5m2,
+                "fp8_e5m2": torch.float8_e5m2,
+            }
+        )
+
+    if dtype_str not in mapping:
+        raise ValueError(f"Unsupported target dtype: {dtype_str}")
+    return mapping[dtype_str]
+
+
 def main():
     # initialize
     parser, args = parse_args()
+    target_dtype = parse_torch_dtype(args.target_dtype)
     set_seed(args.seed)
     init_distributed(timeout=args.dist_timeout, tp_size=args.tp_size)
     print_with_rank("Initialized distributed environment")
@@ -250,7 +297,7 @@ def main():
         if type(config) in AutoDistributedTargetModel._model_mapping:
             target_model = AutoDistributedTargetModel.from_pretrained(
                 pretrained_model_name_or_path=args.target_model_path,
-                torch_dtype=torch.bfloat16,
+                torch_dtype=target_dtype,
                 device="cuda",
                 local_files_only=True,
             ).eval()
@@ -259,7 +306,7 @@ def main():
                 args.target_model_path,
                 tp_plan="auto",
                 tp_size=args.tp_size,
-                torch_dtype=torch.bfloat16,
+                torch_dtype=target_dtype,
                 device_mesh=get_tp_device_mesh(),
             ).eval()
     else:
@@ -269,7 +316,7 @@ def main():
             target_model = (
                 Qwen2_5_VLForConditionalGeneration.from_pretrained(
                     pretrained_model_name_or_path=args.target_model_path,
-                    torch_dtype=torch.bfloat16,
+                    torch_dtype=target_dtype,
                 )
                 .eval()
                 .cuda()
@@ -278,7 +325,7 @@ def main():
             target_model = (
                 AutoModelForCausalLM.from_pretrained(
                     pretrained_model_name_or_path=args.target_model_path,
-                    torch_dtype=torch.bfloat16,
+                    torch_dtype=target_dtype,
                     cache_dir=args.cache_dir,
                 )
                 .eval()
