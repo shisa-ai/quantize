@@ -20,7 +20,7 @@ torchrun \
     --nproc_per_node $NUM_GPUS \
     train_eagle3_online.py \
     --target-model-path shisa-ai/chotto-14b-20251013-dpo \
-    --draft-model-config unphi4-eagle3.json \
+    --draft-model-config unphi4-14b-eagle3.json \
     --train-data-path chotto-20251010.sft.jsonl \
     --dist-timeout 60 \
     --output-dir /data/outputs/chotto-14b-20251013-eagle3 \
