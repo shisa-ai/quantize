@@ -8,20 +8,44 @@ export TORCHINDUCTOR_CACHE_DIR=$ROOT_DIR/cache/compiled_kernels
 ENV=${ENV:-quantize}
 
 # GPU Configuration
-# For 1xMI300:
 NUM_GPUS=1
-# For 8xMI300, uncomment:
-# NUM_GPUS=8
 
-# Batch size configuration
-# For 1xMI300:
-BATCH_SIZE=8
-LEARNING_RATE=1e-4
-# For 8xMI300, uncomment and adjust:
-# BATCH_SIZE=16
-# LEARNING_RATE=3e-4
-# DRAFT_GLOBAL_BATCH_SIZE=32
-# DRAFT_MICRO_BATCH_SIZE=4
+# =============================================================================
+# Learning Rate / Batch Size Configurations
+# EAGLE3 paper: LR 5e-5 at effective batch size 2, scale LR linearly with batch
+# =============================================================================
+
+# --- 1xMI300 (default) ---
+LEARNING_RATE=2e-4
+DRAFT_GLOBAL_BATCH_SIZE=8       # 4x paper batch → 4x LR
+
+# --- 1xMI300 (paper baseline) ---
+# LEARNING_RATE=5e-5
+# DRAFT_GLOBAL_BATCH_SIZE=2
+
+# --- 8xMI300X (conservative) ---
+# NUM_GPUS=8
+# LEARNING_RATE=2e-4
+# DRAFT_GLOBAL_BATCH_SIZE=8
+
+# --- 8xMI300X (higher throughput) ---
+# NUM_GPUS=8
+# LEARNING_RATE=4e-4
+# DRAFT_GLOBAL_BATCH_SIZE=16
+
+# --- 8xMI300X (max throughput) ---
+NUM_GPUS=8
+LEARNING_RATE=4e-4
+DRAFT_GLOBAL_BATCH_SIZE=32
+
+# Hmm, not faster...
+# DRAFT_GLOBAL_BATCH_SIZE=64
+
+# Target model inference batch size (increase for speedup if VRAM allows)
+TARGET_BATCH_SIZE=32             # Try 8-16 on 8xMI300X for faster hidden state generation
+# 8 is at 57GB, we can probably set to 16 maybe even 32 no problem
+# 32 is at 60GB?
+# only takes 5h/epoch...
 
 # Trying to prevent crashes (uncomment if needed)
 # export TORCH_COMPILE=0
@@ -41,26 +65,22 @@ ARGS=(
     --dist-timeout 60
     --output-dir shisa-v2.1-unphi4-14b-eagle3
     --num-epochs 3
-    --batch-size $BATCH_SIZE
     --learning-rate $LEARNING_RATE
+    --batch-size $TARGET_BATCH_SIZE
+    --draft-global-batch-size $DRAFT_GLOBAL_BATCH_SIZE
     --max-length 2048
     --chat-template phi4
     --cache-dir $ROOT_DIR/cache
     --attention-backend sdpa
 )
 
-# For 8xMI300, add these arguments:
+# Optional: wandb logging
 # ARGS+=(
-#     --draft-global-batch-size $DRAFT_GLOBAL_BATCH_SIZE
-#     --draft-micro-batch-size $DRAFT_MICRO_BATCH_SIZE
 #     --log-steps 1
 #     --report-to wandb
 #     --wandb-project EAGLE3
-#     --wandb-name "8xMI300 shisa-v2.1-unphi4-14b bs=$DRAFT_GLOBAL_BATCH_SIZE"
+#     --wandb-name "shisa-v2.1-unphi4-14b-eagle3"
 # )
-
-# For more epochs on 8xMI300, uncomment:
-# ARGS+=(--num-epochs 10)
 
 mamba run -n $ENV torchrun "${ARGS[@]}"
 

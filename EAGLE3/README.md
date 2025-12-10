@@ -316,10 +316,34 @@ Or edit `run-shisa-v2.1-unphi4-14b.1xMI300.sh` and uncomment the 8xMI300 section
 | Setting | 1xMI300 | 8xMI300 |
 |---------|---------|---------|
 | `NUM_GPUS` | 1 | 8 |
-| `BATCH_SIZE` | 8 | 16 |
 | `LEARNING_RATE` | 1e-4 | 3e-4 |
-| `--draft-global-batch-size` | (default) | 32 |
-| `--draft-micro-batch-size` | (default) | 4 |
+
+### Batch Size Parameters
+
+EAGLE3 training has two phases with separate batch size controls:
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `--batch-size` | **Target model** inference batch size. Controls how many samples the large target model processes at once when generating hidden states. | 1 |
+| `--draft-global-batch-size` | Total effective batch size for **draft model** training across all GPUs. This is the number of samples processed before each optimizer step. | 8 |
+| `--draft-micro-batch-size` | Per-GPU batch size for **draft model** forward/backward pass. Controls GPU memory usage. | 1 |
+
+**Relationship:**
+```
+draft_accumulation_steps = draft_global_batch_size / num_gpus / draft_micro_batch_size
+```
+
+**Performance tips:**
+- **Target model inference is the bottleneck** - increasing `--batch-size` typically gives the most speedup since the target model (14B) is much larger than the draft model
+- With 8x192GB VRAM, you have headroom to increase `--batch-size` significantly (try 8-16)
+- If you run out of VRAM, reduce `--draft-micro-batch-size` first (accumulation steps will auto-increase to maintain global batch size)
+
+**Learning rate scaling:**
+- When increasing `--draft-global-batch-size`, scale LR **up** proportionally (linear or √k scaling)
+- Larger batches = fewer updates per epoch, so each update needs to be larger
+- EAGLE3 paper uses LR 5e-5 at effective batch size 2 (micro=1, accumulation=2)
+- Example scaling: batch 2 → 5e-5, batch 8 → 1-2e-4, batch 32 → 3-4e-4
+- Adam/AdamW is more forgiving than SGD, but the general direction still applies
 
 ## Create Dataset
 
