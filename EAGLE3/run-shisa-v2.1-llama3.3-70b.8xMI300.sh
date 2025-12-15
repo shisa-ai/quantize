@@ -212,7 +212,6 @@ EVAL_BATCH_SIZE=8
 
 # Base arguments
 ARGS=(
-    --resume
     --standalone
     --nproc_per_node $NUM_GPUS
     train_eagle3_online.py
@@ -231,6 +230,7 @@ ARGS=(
     --cache-dir $ROOT_DIR/cache
     --attention-backend sdpa
     --tp-size $TP_SIZE
+    --resume
 )
 
 # Optional: wandb logging
