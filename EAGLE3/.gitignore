@@ -1,3 +1,7 @@
 *.jsonl
 .cache/
+wandb/
+
+# External Repos
 SpecForge/
+EAGLE/

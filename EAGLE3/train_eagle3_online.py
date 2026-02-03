@@ -15,12 +15,16 @@ from tqdm import tqdm
 from transformers import AutoConfig, AutoModelForCausalLM, AutoProcessor, AutoTokenizer
 
 from specforge import (
-    AutoDistributedTargetModel,
     AutoDraftModelConfig,
     AutoEagle3DraftModel,
     OnlineEagle3Model,
     QwenVLOnlineEagle3Model,
 )
+# Older specforge releases don't export AutoDistributedTargetModel at top-level.
+try:
+    from specforge import AutoDistributedTargetModel
+except ImportError:  # pragma: no cover - import compatibility shim
+    from specforge.modeling.auto import AutoDistributedTargetModel
 from specforge.data import (
     build_eagle3_dataset,
     generate_vocab_mapping_file,
@@ -71,6 +75,13 @@ def parse_args():
     parser.add_argument("--batch-size", type=int, default=1)
     parser.add_argument("--learning-rate", type=float, default=1e-4)
     parser.add_argument("--max-length", type=int, default=2048)
+    parser.add_argument(
+        "--loss-backend",
+        type=str,
+        default="triton",
+        choices=["triton", "torch"],
+        help="Loss kernel backend: triton (fast) or torch (reference/stable).",
+    )
     parser.add_argument("--warmup-ratio", type=float, default=0.015)
     parser.add_argument(
         "--total-steps",
