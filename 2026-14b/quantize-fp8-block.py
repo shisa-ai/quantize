@@ -119,18 +119,67 @@ def _build_calibration_dataset(
     ds = load_dataset(dataset_id, split=f"{split}[:{num_samples}]")
     ds = ds.shuffle(seed=seed)
 
-    if use_chat_template and messages_column in ds.column_names:
-        orig_cols = list(ds.column_names)
+    if use_chat_template:
+        msg_col = messages_column
+        if msg_col not in ds.column_names:
+            for candidate in ("messages", "conversations", "conversation", "chat", "dialogue"):
+                if candidate in ds.column_names:
+                    msg_col = candidate
+                    break
+        if msg_col in ds.column_names:
+            orig_cols = list(ds.column_names)
 
-        def preprocess(example: dict[str, Any]) -> dict[str, str]:
-            return {
-                "text": tokenizer.apply_chat_template(
-                    example[messages_column],
-                    tokenize=False,
-                )
-            }
+            def preprocess(example: dict[str, Any]) -> dict[str, str]:
+                messages = example[msg_col]
+                if isinstance(messages, str):
+                    import json
 
-        return ds.map(preprocess, remove_columns=orig_cols, desc="Applying chat template")
+                    try:
+                        messages = json.loads(messages)
+                    except json.JSONDecodeError:
+                        pass
+
+                normalized: list[dict[str, str]] = []
+                if isinstance(messages, list):
+                    for msg in messages:
+                        if isinstance(msg, dict):
+                            role = msg.get("role")
+                            content = msg.get("content")
+                            if role is None or content is None:
+                                role = msg.get("from", role)
+                                content = msg.get("value", content)
+                            if role is None or content is None:
+                                role = msg.get("speaker", role)
+                                content = msg.get("text", content)
+                        elif isinstance(msg, (list, tuple)) and len(msg) == 2:
+                            role, content = msg
+                        else:
+                            continue
+
+                        if role is None or content is None:
+                            continue
+
+                        role_str = str(role).strip().lower()
+                        if role_str in {"human", "user"}:
+                            role_str = "user"
+                        elif role_str in {"gpt", "assistant", "bot"}:
+                            role_str = "assistant"
+                        elif role_str in {"system"}:
+                            role_str = "system"
+                        else:
+                            role_str = "user"
+
+                        normalized.append({"role": role_str, "content": str(content)})
+
+                return {
+                    "text": tokenizer.apply_chat_template(
+                        normalized,
+                        tokenize=False,
+                        add_generation_prompt=False,
+                    )
+                }
+
+            return ds.map(preprocess, remove_columns=orig_cols, desc="Applying chat template")
 
     # Fallback: use a plain text column.
     if text_column not in ds.column_names:
@@ -163,6 +212,15 @@ def _build_parser() -> argparse.ArgumentParser:
         "--awq",
         action="store_true",
         help="Use AWQModifier (slower; includes smoothing). Default is QuantizationModifier PTQ.",
+    )
+    p.add_argument(
+        "--datafree",
+        action="store_true",
+        help=(
+            "Do not load calibration data and run the 'datafree' pipeline. "
+            "Valid for recipes that do not require calibration data (e.g., FP8_BLOCK PTQ, "
+            "SpinQuant R1/R2 + PTQ)."
+        ),
     )
     p.add_argument(
         "--spinquant",
@@ -214,8 +272,8 @@ def _build_parser() -> argparse.ArgumentParser:
     )
 
     # Calibration data
-    p.add_argument("--dataset", default="HuggingFaceH4/ultrachat_200k")
-    p.add_argument("--split", default="train_sft", help="Dataset split name.")
+    p.add_argument("--dataset", default="shisa-ai/shisa-v2.1-sharegpt")
+    p.add_argument("--split", default="train", help="Dataset split name.")
     p.add_argument("--num-calibration-samples", type=int, default=256)
     p.add_argument("--max-seq-length", type=int, default=512)
     p.add_argument("--batch-size", type=int, default=1)
@@ -274,6 +332,10 @@ def main(argv: list[str] | None = None) -> int:
         parser.print_help(sys.stderr)
         return 2
 
+    if args.datafree and args.awq:
+        print("error: --datafree is not compatible with --awq (AWQ requires calibration data).", file=sys.stderr)
+        return 2
+
     spinquant_rotations = [r.upper() for r in _parse_csv_list(args.spinquant_rotations)]
     output_dir = args.output_dir or _default_output_dir(
         args.model,
@@ -302,7 +364,7 @@ def main(argv: list[str] | None = None) -> int:
 
     model = AutoModelForCausalLM.from_pretrained(
         args.model,
-        dtype=_torch_dtype(args.dtype),
+        torch_dtype=_torch_dtype(args.dtype),
         device_map=device_map,
         trust_remote_code=args.trust_remote_code,
         revision=args.revision,
@@ -311,16 +373,23 @@ def main(argv: list[str] | None = None) -> int:
     if getattr(model.config, "pad_token_id", None) is None and tokenizer.pad_token_id is not None:
         model.config.pad_token_id = tokenizer.pad_token_id
 
-    ds = _build_calibration_dataset(
-        tokenizer=tokenizer,
-        dataset_id=args.dataset,
-        split=args.split,
-        num_samples=args.num_calibration_samples,
-        seed=args.seed,
-        use_chat_template=args.use_chat_template,
-        messages_column=args.messages_column,
-        text_column=args.text_column,
-    )
+    ds = None
+    if not args.datafree:
+        ds = _build_calibration_dataset(
+            tokenizer=tokenizer,
+            dataset_id=args.dataset,
+            split=args.split,
+            num_samples=args.num_calibration_samples,
+            seed=args.seed,
+            use_chat_template=args.use_chat_template,
+            messages_column=args.messages_column,
+            text_column=args.text_column,
+        )
+
+    # MoE note: Qwen/Qwen3 MoE models (and some other MoEs) have router gate layers
+    # that are sensitive and/or shape-incompatible with block quantization. LLM
+    # Compressor examples typically leave these gates in full precision.
+    ignore = ["lm_head", "re:.*mlp.gate$", "re:.*mlp.shared_expert_gate$"]
 
     recipe: list[Any] = []
     if args.spinquant:
@@ -338,7 +407,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.awq:
         recipe.append(
             AWQModifier(
-                ignore=["lm_head"],
+                ignore=ignore,
                 scheme="FP8_BLOCK",
                 targets=["Linear"],
                 duo_scaling="both",
@@ -347,11 +416,15 @@ def main(argv: list[str] | None = None) -> int:
     else:
         recipe.append(
             QuantizationModifier(
-                ignore=["lm_head"],
+                ignore=ignore,
                 scheme="FP8_BLOCK",
                 targets=["Linear"],
             )
         )
+
+    oneshot_kwargs: dict[str, Any] = {}
+    if args.datafree:
+        oneshot_kwargs["pipeline"] = "datafree"
 
     oneshot(
         model=model,
@@ -361,6 +434,7 @@ def main(argv: list[str] | None = None) -> int:
         max_seq_length=args.max_seq_length,
         num_calibration_samples=args.num_calibration_samples,
         batch_size=args.batch_size,
+        **oneshot_kwargs,
     )
 
     if not args.skip_sample_generation:
