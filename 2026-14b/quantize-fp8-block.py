@@ -391,6 +391,11 @@ def main(argv: list[str] | None = None) -> int:
     # Compressor examples typically leave these gates in full precision.
     ignore = ["lm_head", "re:.*mlp.gate$", "re:.*mlp.shared_expert_gate$"]
 
+    # MoE note: Qwen/Qwen3 MoE models (and some other MoEs) have router gate layers
+    # that are sensitive and/or shape-incompatible with block quantization. LLM
+    # Compressor examples typically leave these gates in full precision.
+    ignore = ["lm_head", "re:.*mlp.gate$", "re:.*mlp.shared_expert_gate$"]
+
     recipe: list[Any] = []
     if args.spinquant:
         transform_block_size = (
