@@ -10,7 +10,9 @@ location referenced by the published `shisa-asr-v0.93b-FP8` model card.
 ```text
 model: shisa-ai/shisa-asr-v0.95b
 revision: faa3d244fe9490f3fa5d05acacafaa1f668e180d
-recommended derivative repo: shisa-ai/shisa-asr-v0.95b-FP8
+published derivative repo: shisa-ai/shisa-asr-v0.95b-FP8
+published HF revision: 52607d9751eca99c68d21e9995a3606e02fa2f36
+visibility: private
 ```
 
 ## Scope
@@ -88,15 +90,29 @@ The canonical FP8_DYNAMIC artifact produced on 2026-08-28 has:
 - vLLM 0.26 detection: `quantization=compressed-tensors`
 - selected kernel: `CutlassFP8ScaledMMLinearKernel` for `CompressedTensorsW8A8Fp8`
 
+## Private publication
+
+The canonical FP8_DYNAMIC artifact was published privately at:
+
+```text
+repo: shisa-ai/shisa-asr-v0.95b-FP8
+revision: 52607d9751eca99c68d21e9995a3606e02fa2f36
+files: 25
+uploaded bytes: 7,959,087,632
+```
+
+The uploaded card, compressed-tensors config, provenance summary, file sizes,
+and weight-shard LFS hashes were verified against the local artifact. Backend
+validation should pin the exact revision above rather than `main`.
+
 ## Publication TODO
 
-- [ ] Before publishing `shisa-ai/shisa-asr-v0.95b-FP8`, run matched BF16 versus
-  FP8_DYNAMIC CHIME6 and JIA evaluations to provide strict evaluation parity
-  with the `shisa-asr-v0.93b-FP8` model card.
-- [ ] Replace the copied base-model README in the generated artifact with a
-  quant-specific model card linking this script at an exact Git commit.
-- [ ] Reconcile the Earnings22 wording: the v0.95b card calls the benchmark
-  finalized, while the checked-in manifest/evaluator still labels its
+- [ ] Before production qualification or broader publication, run matched BF16
+  versus FP8_DYNAMIC CHIME6 and JIA evaluations to provide strict evaluation
+  parity with the `shisa-asr-v0.93b-FP8` model card.
+- [x] Replace the copied base-model README with a quant-specific model card
+  linking this script at exact Git commit `480a16e`.
+- [x] Disclose the Earnings22 status inconsistency: the base card calls the
+  benchmark finalized while its manifest/evaluator still identifies the
   model-assisted targets as pending final human review.
-- [ ] Upload privately first and pin backend validation to the resulting Hugging
-  Face commit SHA.
+- [x] Upload privately and record the resulting Hugging Face commit SHA.
