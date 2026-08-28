@@ -20,6 +20,19 @@ Most scripts use [shisa-ai/shisa-v2-sharegpt](https://huggingface.co/datasets/sh
 
 ## Folders
 
+### `shisa-asr/`
+
+Phi4MM ASR decoder-only FP8 export tooling. The current script is pinned to
+`shisa-ai/shisa-asr-v0.95b` and supports header-only scope inspection plus
+`FP8_DYNAMIC` and `FP8_BLOCK` compressed-tensors exports while preserving the
+multimodal towers and LoRA tensors.
+
+- `quantize_decoder_fp8.py` - validated v0.95b exporter and vLLM target rewrite
+- `README.md` - exact environment, reproduction commands, artifact checks, and
+  publication TODOs
+
+---
+
 ### `Mistral-Nemo-Japanese-Instruct-2408/`
 
 Single-GPU quantization examples for a 12B parameter model. Good starting point for learning the quantization workflow.
