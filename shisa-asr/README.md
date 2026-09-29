@@ -192,10 +192,11 @@ this convention is `shisa-ai/shisa-asr-v0.97-FP8`.
 
 ## Publication TODO
 
-- [ ] Commit the export before publishing so `script.git_revision` in the
+- [x] Commit the export before publishing so `script.git_revision` in the
   summary names a revision that contains the script that produced the artifact.
-  The committed validator records both `script` and `validator` revisions with a
-  `git_dirty` flag for this reason.
+  The v0.97 summary records revision `7bd2927` with `git_dirty: false`. The
+  validator records both `script` and `validator` revisions with that flag so an
+  uncommitted tree cannot be mistaken for a reproducible revision.
 - [ ] Run matched BF16 versus FP8_DYNAMIC CHIME6 and JIA evaluations before
   production qualification. The v0.95b artifact was published without them, so
   both carry the same gap.

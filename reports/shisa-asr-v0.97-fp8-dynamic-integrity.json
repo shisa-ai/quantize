@@ -17,16 +17,16 @@
     "safetensor_shards": 2
   },
   "artifact_path": "/home/morpheus/data/models/hf/shisa-ai/shisa-asr-v0.97-fp8-dynamic",
-  "generated_at_utc": "2026-09-29T04:42:32Z",
+  "generated_at_utc": "2026-09-29T04:42:51Z",
   "mismatch_examples": [],
   "output_repo_id": "shisa-ai/shisa-asr-v0.97-FP8",
   "private": true,
   "script": {
     "git_dirty": false,
-    "git_revision": "c8ab6c5b07876cb6d1dd6ec154a576df1335e565",
+    "git_revision": "7bd29271394cd398989334beeefc68e207cfa13c",
     "github_repo": "https://github.com/shisa-ai/quantize",
-    "github_url": "https://github.com/shisa-ai/quantize/blob/c8ab6c5b07876cb6d1dd6ec154a576df1335e565/shisa-asr/validate_fp8_artifact.py",
-    "relative_path": "shisa-asr/validate_fp8_artifact.py"
+    "github_url": "https://github.com/shisa-ai/quantize/blob/7bd29271394cd398989334beeefc68e207cfa13c/shisa-asr/quantize_decoder_fp8.py",
+    "relative_path": "shisa-asr/quantize_decoder_fp8.py"
   },
   "source_indexed_tensors": 2047,
   "source_path": "/home/morpheus/data/models/hf/shisa-ai/shisa-asr-v0.97",
@@ -38,5 +38,12 @@
     "safetensors": "0.8.0",
     "torch": "2.10.0+cu128",
     "transformers": "4.57.6"
+  },
+  "validator": {
+    "git_dirty": false,
+    "git_revision": "7bd29271394cd398989334beeefc68e207cfa13c",
+    "github_repo": "https://github.com/shisa-ai/quantize",
+    "github_url": "https://github.com/shisa-ai/quantize/blob/7bd29271394cd398989334beeefc68e207cfa13c/shisa-asr/validate_fp8_artifact.py",
+    "relative_path": "shisa-asr/validate_fp8_artifact.py"
   }
 }
