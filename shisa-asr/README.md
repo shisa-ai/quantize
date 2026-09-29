@@ -8,9 +8,12 @@ Published lineage: [`shisa-ai/shisa-asr-v0.95b-FP8`](https://huggingface.co/shis
 ## Pinned sources
 
 ```text
-# current target, not yet published
+# current target
 model: shisa-ai/shisa-asr-v0.97
 revision: 7751a34a5d4f0868ce660320c830ddbbec9044cc
+published derivative repo: shisa-ai/shisa-asr-v0.97-FP8
+published HF revision: 2fe198f37f84b1324886e91f622bee23ce8cfd44
+visibility: private
 
 # published lineage
 model: shisa-ai/shisa-asr-v0.95b
@@ -20,8 +23,8 @@ published HF revision: 52607d9751eca99c68d21e9995a3606e02fa2f36
 visibility: private
 ```
 
-v0.96 and v0.97 have no published FP8 derivative. The v0.95b, v0.93b, v0.9b,
-and v0.1b checkpoints do.
+v0.96 has no published FP8 derivative. The v0.97, v0.95b, v0.93b, v0.9b, and
+v0.1b checkpoints do.
 
 ## Scope
 
@@ -164,13 +167,78 @@ Additional checks on the v0.97 export:
   v0.95b-FP8 artifact.
 - The published v0.95b artifact was additionally reported on vLLM 0.26 with
   `quantization=compressed-tensors` and the
-  `CutlassFP8ScaledMMLinearKernel` kernel for `CompressedTensorsW8A8Fp8`. That
-  runtime kernel check has not been reproduced for v0.97.
+  `CutlassFP8ScaledMMLinearKernel` kernel for `CompressedTensorsW8A8Fp8`. The
+  v0.97 deployment reproduced this exactly on vLLM `0.26.0` and torch
+  `2.11.0+cu130` (CUDA 13.0).
 
 Local artifact path used for the v0.97 export:
 `/home/morpheus/data/models/hf/shisa-ai/shisa-asr-v0.97-fp8-dynamic` (7.5 GiB).
 The authoritative run record is the `quantization_summary.json` inside that
 directory; `reports/shisa-asr-v0.97-fp8-dynamic-summary.json` is a copy of it.
+
+## Matched runtime and accuracy evaluation
+
+Measured 2026-09-29 on `aomori-gpu2`, comparing the new dev v0.97 backend
+against the production v0.95b backend. The authoritative record is
+`reports/shisa-asr-v0.97-fp8-dynamic-evals.json`, which carries the deployment
+identities, the harness revision, and a SHA-256 for every `scores.json` and
+`false_positives.csv` it summarizes.
+
+| | v0.97-FP8 | v0.95b-FP8 baseline |
+|---|---|---|
+| deployment | `shisa-asr-v0.97-gpu5` | `shisa-asr-v0.95b-gpu4` |
+| role | new dev ASR backend | current production ASR backend |
+| artifact revision | `2fe198f37f84b1...` | `52607d9751eca9...` |
+| GPU / port | GPU5 / 8004 | GPU4 / 8001 |
+| process started | 2026-09-29 06:56 | 2026-09-08 11:24 |
+
+Both deployments use the same `rtx5090-8x` profile launcher with identical
+flags (`--gpu-memory-utilization 0.82`, `--max-num-seqs 8`, `--max-model-len
+12800`, `--limit-mm-per-prompt '{"audio": 1}'`, `--enforce-eager`, TP1), the same
+host, the same RTX 5090 model, and the same container runtime. The only
+differences are the physical GPU index and the process age.
+
+Startup memory accounting is identical:
+
+| Quantity | v0.97-FP8 | v0.95b-FP8 |
+|---|---:|---:|
+| weight memory | `5.9 GiB` | `5.9 GiB` |
+| available KV cache | `19.51 GiB` | `19.51 GiB` |
+| KV cache capacity | `159,624 tokens` | `159,624 tokens` |
+| selected kernel | `CutlassFP8ScaledMMLinearKernel` | `CutlassFP8ScaledMMLinearKernel` |
+
+Harness: `shisa-multimodal-eval` at revision `1efa0a5`, `audio-evals/jia-test`
+and `audio-evals/chime6`, reached through an SSH port forward. Reference text is
+identical across both runs (1,299 characters for JIA-test, 8,715 for CHIME6),
+every row has an empty `error` column, and both models scored 32/32 and 200/200
+valid comparisons.
+
+| Eval | v0.97 per-sample | v0.95b per-sample | v0.97 aggregate | v0.95b aggregate |
+|---|---:|---:|---:|---:|
+| JIA-test (32) | `0.115180` | `0.141873` | `0.121632` | `0.130100` |
+| CHIME6 base (200) | `0.263867` | `0.282797` | `0.222490` | `0.236030` |
+| CHIME6 hotwords (200) | `0.255802` | `0.264830` | `0.215032` | `0.221457` |
+
+v0.97-FP8 is lower on all six measurements: JIA-test by `-0.008468` aggregate
+and `-0.026693` per-sample; CHIME6 base by `-0.013540` and `-0.018930`; CHIME6
+hotwords by `-0.006425` and `-0.009028`.
+
+Hotword false positives on CHIME6 are unchanged: **17 of 200 for both**, 13 on
+the same files. v0.97-FP8 introduced 4 (`OGG/3`, `OGG/72`, `OGG/89`,
+`OGG/149`) and removed 4 (`OGG/38`, `OGG/39`, `OGG/68`, `OGG/108`). Matched
+tokens are dominated by stopwords (`that`, `the`, `Shen`, `in`, `Here`) for both.
+
+Hotword prompting helps both models on CHIME6, and helps v0.95b-FP8 more:
+`-0.007458` aggregate for v0.97-FP8 against `-0.014573` for v0.95b-FP8. On the
+only dataset here with a real distractor set, v0.97-FP8 lowers hotword-prompted
+CER without lowering the false-positive count and is less responsive to hotword
+prompting than v0.95b-FP8.
+
+Not measured for v0.97: SPREDS, LibriVox, preference-test, and Earnings22. No
+BF16 baseline was measured on this host, so the quantization delta remains
+unquantified for v0.97, and the numbers above are not comparable to the
+published v0.95b-FP8 card, which used a different harness configuration
+(SPREDS base CER `0.044691` here versus `0.038981` on that card).
 
 ## Private publication
 
@@ -205,10 +273,20 @@ validation should pin the exact revision above rather than `main`.
 
 ## Publication TODO
 
-- [ ] Update the `shisa-ai/shisa-asr-v0.97-FP8` card with runtime kernel
-  selection, model-load GPU memory, and matched BF16 versus FP8 quality and
-  throughput once the RTX 5090 deployment validation runs. The card currently
-  marks these as pending and says the artifact is not production-qualified.
+- [ ] Push the updated `shisa-ai/shisa-asr-v0.97-FP8` card. The local card at
+  `/home/morpheus/data/models/hf/shisa-ai/shisa-asr-v0.97-fp8-dynamic/README.md`
+  (SHA-256 `d0d3050eb1158c5b...`, 13,428 bytes) and its regenerated
+  `SHA256SUMS` (24 of 24 entries verified) now record runtime kernel selection,
+  GPU memory, and the matched FP8-versus-FP8 evaluation. The push is blocked:
+  the stored Hugging Face token is read-only and the write token used for the
+  original upload is no longer valid. The remote card still marks these as
+  pending at revision `2fe198f`.
+- [ ] Run a matched BF16 versus FP8_DYNAMIC evaluation and a throughput or
+  latency benchmark. The RTX 5090 deployment ran with `--enforce-eager` and
+  shared the host with live services, so no performance claim is available.
+- [ ] Run SPREDS, LibriVox, preference-test, and Earnings22 against v0.97 to
+  complete the coverage the v0.95b artifact already has. The preference test
+  also needs `SHISA_API_KEY` before its judging stage can run.
 - [ ] Run matched BF16 versus FP8_DYNAMIC CHIME6 and JIA evaluations before
   production qualification. The v0.95b artifact was published without them, so
   both carry the same gap.

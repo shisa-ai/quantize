@@ -1,0 +1,273 @@
+{
+  "caveats": [
+    "FP8 versus FP8 only; no BF16 baseline was measured on this host.",
+    "Not comparable to the published v0.95b-FP8 card: same artifact, different harness configuration (SPREDS base CER 0.044691 here versus 0.038981 on that card).",
+    "The two deployments differ in physical GPU index (4 versus 5) and process age; every launch flag, the runtime, and the startup memory accounting are identical.",
+    "v0.97 stdout was not captured to a file for the eval runs; the v0.95b run logs are under /home/morpheus/data/tmp/eval095/."
+  ],
+  "cer_conventions": {
+    "aggregate": "total edit distance / total reference characters",
+    "per_sample_average": "mean of per-sample CER (harness 'Average CER')"
+  },
+  "deltas_v097_minus_v095b": {
+    "chime6": {
+      "base": {
+        "aggregate": -0.01354,
+        "per_sample_average": -0.01893
+      },
+      "hotwords": {
+        "aggregate": -0.006425,
+        "per_sample_average": -0.009028
+      }
+    },
+    "jia-test": {
+      "base": {
+        "aggregate": -0.008468,
+        "per_sample_average": -0.026693
+      }
+    }
+  },
+  "generated_at_utc": "2026-09-29",
+  "harness": {
+    "access": "ssh -L tunnel to the deployment port; harness --base-url http://127.0.0.1:<port>/v1",
+    "entrypoints": [
+      "audio-evals/jia-test/calculate_jia_cer.py",
+      "audio-evals/chime6/calculate_chime6_cer.py"
+    ],
+    "git_revision": "1efa0a5fe2cd623ad674200bc7bac9a74472a78b",
+    "path": "/home/morpheus/data/dev/shisa/shisa-multimodal-eval",
+    "repo": "shisa-multimodal-eval"
+  },
+  "host": {
+    "gpus": "8x NVIDIA GeForce RTX 5090, 32607 MiB each",
+    "launcher_flags": "--gpu-memory-utilization 0.82 --max-num-seqs 8 --max-model-len 12800 --limit-mm-per-prompt '{\"audio\": 1}' --enforce-eager --tensor-parallel-size 1",
+    "launcher_profile": "deploy-ai profiles/rtx5090-8x/scripts/{shisa-asr-v0.97-FP8.sh,shisa-asr-v0.95b-FP8.sh}",
+    "name": "aomori-gpu2",
+    "runtime": "vLLM 0.26.0 on torch 2.11.0+cu130 (CUDA 13.0) in the shisa:latest service container"
+  },
+  "hotword_benefit_chime6": {
+    "v0.95b": {
+      "aggregate": 0.014573,
+      "per_sample_average": 0.017967
+    },
+    "v0.97": {
+      "aggregate": 0.007458,
+      "per_sample_average": 0.008065
+    }
+  },
+  "hotword_false_positive_overlap": {
+    "shared": 13,
+    "v0.95b_only": [
+      "OGG/38.ogg",
+      "OGG/39.ogg",
+      "OGG/68.ogg",
+      "OGG/108.ogg"
+    ],
+    "v0.95b_total": 17,
+    "v0.97_only": [
+      "OGG/3.ogg",
+      "OGG/72.ogg",
+      "OGG/89.ogg",
+      "OGG/149.ogg"
+    ],
+    "v0.97_total": 17
+  },
+  "models": {
+    "shisa-ai__shisa-asr-v0.95b-FP8": {
+      "deployment": {
+        "artifact_repo": "shisa-ai/shisa-asr-v0.95b-FP8",
+        "artifact_revision": "52607d9751eca99c68d21e9995a3606e02fa2f36",
+        "deployment": "shisa-asr-v0.95b-gpu4",
+        "gpu": 4,
+        "pid": 226498,
+        "port": 8001,
+        "process_started_local": "2026-09-08 11:24",
+        "role": "current production ASR backend",
+        "served_model_name": "shisa-ai/shisa-asr-v0.95b-FP8",
+        "startup": {
+          "available_kv_cache_gib": 19.51,
+          "dtype": "torch.bfloat16",
+          "gpu_memory_utilization": 0.82,
+          "kernel": "CutlassFP8ScaledMMLinearKernel for CompressedTensorsW8A8Fp8",
+          "kv_cache_tokens": 159624,
+          "max_seq_len": 12800,
+          "model_loading_gib": 5.9,
+          "quantization": "compressed-tensors",
+          "vllm": "0.26.0"
+        },
+        "stdout_log": "/data/inference/logs/shisa-asr-v0.95b-gpu4.stdout.log"
+      },
+      "evals": {
+        "chime6": {
+          "base": {
+            "aggregate": 0.23603,
+            "deletions": 1416,
+            "insertions": 105,
+            "per_sample_average": 0.282797,
+            "substitutions": 536
+          },
+          "false_positives_csv": "shisa-ai__shisa-asr-v0.95b-FP8/chime6/false_positives.csv",
+          "false_positives_sha256": "d4a18a8dc961c588d9564a5d012e6f76a40473e8f4caec0a77e4afae425c7424",
+          "hotword_false_positive_items": 17,
+          "hotwords": {
+            "aggregate": 0.221457,
+            "deletions": 1262,
+            "insertions": 115,
+            "per_sample_average": 0.26483,
+            "substitutions": 553,
+            "valid": 200
+          },
+          "reference_characters": 8715,
+          "scores_json": "shisa-ai__shisa-asr-v0.95b-FP8/chime6/scores.json",
+          "scores_sha256": "94a5b57d916feaab3e3b3019caa978931622f467f02eda4c027c224d296abcfa",
+          "total_files": 200,
+          "valid": 200
+        },
+        "jia-test": {
+          "base": {
+            "aggregate": 0.1301,
+            "deletions": 79,
+            "insertions": 20,
+            "per_sample_average": 0.141873,
+            "substitutions": 70
+          },
+          "reference_characters": 1299,
+          "scores_json": "shisa-ai__shisa-asr-v0.95b-FP8/jia-test/scores.json",
+          "scores_sha256": "b6cdba2cfa09578fec76dc142498e6167d21247c5f0b387bf3ab0c7ee1a90fbe",
+          "total_files": 32,
+          "valid": 32
+        },
+        "librivox-clean-validation": {
+          "base": {
+            "aggregate": 0.012122,
+            "deletions": 761,
+            "insertions": 188,
+            "per_sample_average": 0.014704,
+            "substitutions": 317
+          },
+          "false_positives_csv": "shisa-ai__shisa-asr-v0.95b-FP8/librivox-clean-validation/false_positives.csv",
+          "false_positives_sha256": "47fcd4770473d7e02a89ea848e7d103f41daa4f16b4e01a9b21215ea6db7b078",
+          "hotword_false_positive_items": 29,
+          "hotwords": {
+            "aggregate": 0.012677,
+            "deletions": 788,
+            "insertions": 182,
+            "per_sample_average": 0.015025,
+            "substitutions": 354,
+            "valid": 1000
+          },
+          "reference_characters": 104439,
+          "scores_json": "shisa-ai__shisa-asr-v0.95b-FP8/librivox-clean-validation/scores.json",
+          "scores_sha256": "7bc37eb95d0b5039159f24b5859e96604ce354ce7a74af0748eb98d09cbce119",
+          "total_files": 1000,
+          "valid": 1000
+        },
+        "spreds": {
+          "base": {
+            "aggregate": 0.044791,
+            "deletions": 345,
+            "insertions": 115,
+            "per_sample_average": 0.044691,
+            "substitutions": 721
+          },
+          "false_positives_csv": "shisa-ai__shisa-asr-v0.95b-FP8/spreds/false_positives.csv",
+          "false_positives_sha256": "af28de4a9fe3e452bc4072568eba675466a1f88d8814cfb2fb56ea7b3ebaaf8f",
+          "hotword_false_positive_items": 2,
+          "hotwords": {
+            "aggregate": 0.044601,
+            "deletions": 342,
+            "insertions": 110,
+            "per_sample_average": 0.044811,
+            "substitutions": 724,
+            "valid": 1000
+          },
+          "reference_characters": 26367,
+          "scores_json": "shisa-ai__shisa-asr-v0.95b-FP8/spreds/scores.json",
+          "scores_sha256": "a958e2e35ff608c4db7e6d1be2e87008c0d3b1676f3b1e732ae4730a5b0b849f",
+          "total_files": 1000,
+          "valid": 1000
+        }
+      }
+    },
+    "shisa-ai__shisa-asr-v0.97": {
+      "deployment": {
+        "artifact_repo": "shisa-ai/shisa-asr-v0.97-FP8",
+        "artifact_revision": "2fe198f37f84b1324886e91f622bee23ce8cfd44",
+        "deployment": "shisa-asr-v0.97-gpu5",
+        "gpu": 5,
+        "pid": 626434,
+        "port": 8004,
+        "process_started_local": "2026-09-29 06:56",
+        "role": "new dev ASR backend",
+        "served_model_name": "shisa-ai/shisa-asr-v0.97",
+        "startup": {
+          "available_kv_cache_gib": 19.51,
+          "cuda": "13.0",
+          "cudagraph_gib": 0.0,
+          "dtype": "torch.bfloat16",
+          "gpu_memory_utilization": 0.82,
+          "kernel": "CutlassFP8ScaledMMLinearKernel for CompressedTensorsW8A8Fp8",
+          "kv_cache_tokens": 159624,
+          "loading_weights_seconds": 1.07,
+          "max_seq_len": 12800,
+          "model_loading_gib": 5.9,
+          "non_torch_gib": 0.19,
+          "peak_activation_gib": 0.12,
+          "quantization": "compressed-tensors",
+          "torch": "2.11.0+cu130",
+          "vllm": "0.26.0",
+          "weight_gib": 5.9
+        },
+        "stdout_log": "/data/inference/logs/shisa-asr-v0.97-gpu5.stdout.log"
+      },
+      "evals": {
+        "chime6": {
+          "base": {
+            "aggregate": 0.22249,
+            "deletions": 1321,
+            "insertions": 116,
+            "per_sample_average": 0.263867,
+            "substitutions": 502
+          },
+          "false_positives_csv": "shisa-ai__shisa-asr-v0.97/chime6/false_positives.csv",
+          "false_positives_sha256": "b34be7339de79982b6da8488bb6cfa4a16b77a796ddb7f44fa988ceced3f7815",
+          "hotword_false_positive_items": 17,
+          "hotwords": {
+            "aggregate": 0.215032,
+            "deletions": 1270,
+            "insertions": 109,
+            "per_sample_average": 0.255802,
+            "substitutions": 495,
+            "valid": 200
+          },
+          "reference_characters": 8715,
+          "scores_json": "shisa-ai__shisa-asr-v0.97/chime6/scores.json",
+          "scores_sha256": "ea1eb64cfd25442cb06dc80cb5d1cc355560cc1f79e13ad9d24d71d96f51e126",
+          "total_files": 200,
+          "valid": 200
+        },
+        "jia-test": {
+          "base": {
+            "aggregate": 0.121632,
+            "deletions": 70,
+            "insertions": 18,
+            "per_sample_average": 0.11518,
+            "substitutions": 70
+          },
+          "reference_characters": 1299,
+          "scores_json": "shisa-ai__shisa-asr-v0.97/jia-test/scores.json",
+          "scores_sha256": "54700c76b20d11a172b4a84b95da29a4ba6cbe2888c97d4b067791711f91649d",
+          "total_files": 32,
+          "valid": 32
+        }
+      }
+    }
+  },
+  "not_run": [
+    "spreds",
+    "librivox-clean-validation",
+    "preference-test (transcription completed for v0.95b-FP8; judging requires SHISA_API_KEY)",
+    "Earnings22"
+  ],
+  "purpose": "Matched FP8 artifact comparison between the new dev v0.97 backend and the production v0.95b backend, ahead of a product-team rerun."
+}

@@ -23,7 +23,8 @@ Most scripts use [shisa-ai/shisa-v2-sharegpt](https://huggingface.co/datasets/sh
 ### `shisa-asr/`
 
 Phi4MM ASR decoder-only FP8 export tooling. The current target is
-`shisa-ai/shisa-asr-v0.97`; the published lineage is
+`shisa-ai/shisa-asr-v0.97`, published privately as
+`shisa-ai/shisa-asr-v0.97-FP8`; the previous published lineage is
 `shisa-ai/shisa-asr-v0.95b-FP8`. Supports header-only scope inspection plus
 `FP8_DYNAMIC` and `FP8_BLOCK` compressed-tensors exports while preserving the
 multimodal towers and LoRA tensors.
