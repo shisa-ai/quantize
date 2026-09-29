@@ -170,6 +170,18 @@ def git_state(repo_dir: Path) -> tuple[str | None, bool]:
         return None, False
 
 
+def script_block(relative_path: str, revision: str, dirty: bool) -> dict[str, Any]:
+    return {
+        "github_repo": "https://github.com/shisa-ai/quantize",
+        "relative_path": relative_path,
+        "git_revision": revision,
+        "git_dirty": dirty,
+        "github_url": (
+            f"https://github.com/shisa-ai/quantize/blob/{revision}/{relative_path}"
+        ),
+    }
+
+
 def main() -> None:
     args = parse_args()
     source_path = args.source_path.resolve()
@@ -225,16 +237,14 @@ def main() -> None:
     }
     revision, dirty = git_state(Path(__file__).resolve().parent.parent)
     if revision:
-        report["script"] = {
-            "github_repo": "https://github.com/shisa-ai/quantize",
-            "relative_path": "shisa-asr/validate_fp8_artifact.py",
-            "git_revision": revision,
-            "git_dirty": dirty,
-            "github_url": (
-                "https://github.com/shisa-ai/quantize/blob/"
-                f"{revision}/shisa-asr/validate_fp8_artifact.py"
-            ),
-        }
+        # `script` follows the published convention and names the exporter that
+        # produced the artifact; `validator` names this verification script.
+        report["script"] = script_block(
+            "shisa-asr/quantize_decoder_fp8.py", revision, dirty
+        )
+        report["validator"] = script_block(
+            "shisa-asr/validate_fp8_artifact.py", revision, dirty
+        )
     if args.output_repo_id:
         report["output_repo_id"] = args.output_repo_id
         report["private"] = args.private

@@ -17,15 +17,15 @@
     "safetensor_shards": 2
   },
   "artifact_path": "/home/morpheus/data/models/hf/shisa-ai/shisa-asr-v0.97-fp8-dynamic",
-  "generated_at_utc": "2026-09-29T04:36:48Z",
+  "generated_at_utc": "2026-09-29T04:42:32Z",
   "mismatch_examples": [],
   "output_repo_id": "shisa-ai/shisa-asr-v0.97-FP8",
   "private": true,
   "script": {
-    "git_dirty": true,
-    "git_revision": "a2c77f0bbb7f09dc6cdf50ed7cc6fc61d9ab1464",
+    "git_dirty": false,
+    "git_revision": "c8ab6c5b07876cb6d1dd6ec154a576df1335e565",
     "github_repo": "https://github.com/shisa-ai/quantize",
-    "github_url": "https://github.com/shisa-ai/quantize/blob/a2c77f0bbb7f09dc6cdf50ed7cc6fc61d9ab1464/shisa-asr/validate_fp8_artifact.py",
+    "github_url": "https://github.com/shisa-ai/quantize/blob/c8ab6c5b07876cb6d1dd6ec154a576df1335e565/shisa-asr/validate_fp8_artifact.py",
     "relative_path": "shisa-asr/validate_fp8_artifact.py"
   },
   "source_indexed_tensors": 2047,

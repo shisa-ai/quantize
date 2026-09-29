@@ -129,7 +129,10 @@ to record dtype and shape accounting without reading tensor values.
 
 The committed `quantize_decoder_fp8.py` does not emit `tool_versions`,
 `script`, `generated_at_utc`, or `artifact_integrity`; the published v0.95b-FP8
-summary carries those fields, so this script is the way to reproduce them.
+summary carries those fields, so this script is the way to reproduce them. It
+writes `script` for the exporter, following the published convention, and
+`validator` for itself. Both record `git_dirty` so an uncommitted tree cannot
+be mistaken for a reproducible revision.
 
 ## Validated artifact shape
 
@@ -191,7 +194,8 @@ this convention is `shisa-ai/shisa-asr-v0.97-FP8`.
 
 - [ ] Commit the export before publishing so `script.git_revision` in the
   summary names a revision that contains the script that produced the artifact.
-  The v0.97 summary currently records `git_dirty: true`.
+  The committed validator records both `script` and `validator` revisions with a
+  `git_dirty` flag for this reason.
 - [ ] Run matched BF16 versus FP8_DYNAMIC CHIME6 and JIA evaluations before
   production qualification. The v0.95b artifact was published without them, so
   both carry the same gap.
