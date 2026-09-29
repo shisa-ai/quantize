@@ -174,6 +174,22 @@ directory; `reports/shisa-asr-v0.97-fp8-dynamic-summary.json` is a copy of it.
 
 ## Private publication
 
+The v0.97 artifact was published privately at:
+
+```text
+repo: shisa-ai/shisa-asr-v0.97-FP8
+revision: 2fe198f37f84b1324886e91f622bee23ce8cfd44
+files: 25
+visibility: private
+uploaded bytes: 7,959,741,261
+```
+
+The uploaded card, `SHA256SUMS`, provenance summary, file sizes, and LFS
+weight-shard hashes were verified against the local artifact. All four LFS
+objects (both weight shards, `tokenizer.json`, `training_args.bin`) match the
+local SHA-256 digests, and unauthenticated access is refused. Backend validation
+should pin the exact revision above rather than `main`.
+
 The v0.95b artifact was published privately at:
 
 ```text
@@ -187,25 +203,24 @@ The uploaded card, compressed-tensors config, provenance summary, file sizes,
 and weight-shard LFS hashes were verified against the local artifact. Backend
 validation should pin the exact revision above rather than `main`.
 
-The v0.97 FP8 export has not been uploaded. The expected repo name following
-this convention is `shisa-ai/shisa-asr-v0.97-FP8`.
-
 ## Publication TODO
 
+- [ ] Update the `shisa-ai/shisa-asr-v0.97-FP8` card with runtime kernel
+  selection, model-load GPU memory, and matched BF16 versus FP8 quality and
+  throughput once the RTX 5090 deployment validation runs. The card currently
+  marks these as pending and says the artifact is not production-qualified.
+- [ ] Run matched BF16 versus FP8_DYNAMIC CHIME6 and JIA evaluations before
+  production qualification. The v0.95b artifact was published without them, so
+  both carry the same gap.
 - [x] Commit the export before publishing so `script.git_revision` in the
   summary names a revision that contains the script that produced the artifact.
   The v0.97 summary records revision `7bd2927` with `git_dirty: false`. The
   validator records both `script` and `validator` revisions with that flag so an
   uncommitted tree cannot be mistaken for a reproducible revision.
-- [ ] Run matched BF16 versus FP8_DYNAMIC CHIME6 and JIA evaluations before
-  production qualification. The v0.95b artifact was published without them, so
-  both carry the same gap.
-- [ ] Reproduce the vLLM runtime kernel-selection check for v0.97 on the
-  deployment GPU.
+- [x] Upload privately and record the resulting Hugging Face commit SHA
+  (v0.97).
 - [x] Replace the copied base-model README with a quant-specific model card
   linking this script at exact Git commit `480a16e` (v0.95b).
 - [x] Disclose the Earnings22 status inconsistency: the base card calls the
   benchmark finalized while its manifest/evaluator still identifies the
   model-assisted targets as pending final human review (v0.95b).
-- [x] Upload privately and record the resulting Hugging Face commit SHA
-  (v0.95b).
