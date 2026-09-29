@@ -53,6 +53,8 @@ SKIP_COPY_NAMES = {"config.json"}
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model-path", type=Path, default=DEFAULT_MODEL_PATH)
+    parser.add_argument("--model-id", default=MODEL_ID, help="Report provenance only.")
+    parser.add_argument("--model-revision", default=MODEL_REVISION, help="Report provenance only.")
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--run", action="store_true", help="Run quantization after safety checks.")
     parser.add_argument("--force", action="store_true")
@@ -126,6 +128,8 @@ def inspect_checkpoint(
     ignore: Sequence[str],
     expected_target_count: int,
     scheme: str,
+    model_id: str = MODEL_ID,
+    model_revision: str = MODEL_REVISION,
 ) -> dict[str, Any]:
     config = json.loads((model_path / "config.json").read_text(encoding="utf-8"))
     weight_names = read_weight_names(model_path)
@@ -144,8 +148,8 @@ def inspect_checkpoint(
     if protected:
         safety_errors.append("quantization targets overlap protected multimodal modules")
     return {
-        "model_id": MODEL_ID,
-        "model_revision": MODEL_REVISION,
+        "model_id": model_id,
+        "model_revision": model_revision,
         "model_path": str(model_path),
         "model_type": config.get("model_type"),
         "architecture": config.get("architectures"),
@@ -371,6 +375,8 @@ def main() -> None:
         ignore=args.ignore,
         expected_target_count=args.expected_target_count,
         scheme=args.scheme,
+        model_id=args.model_id,
+        model_revision=args.model_revision,
     )
     report["precision"] = args.precision
     args.report_json.parent.mkdir(parents=True, exist_ok=True)
@@ -392,6 +398,9 @@ def main() -> None:
             raise SystemExit(f"Output exists; pass --force to replace it: {output_dir}")
         shutil.rmtree(output_dir)
     quantize_model(model_path=model_path, output_dir=output_dir, report=report)
+    args.report_json.write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
 
 
 if __name__ == "__main__":

@@ -1,0 +1,42 @@
+{
+  "artifact_integrity": {
+    "bf16_scale_tensors": 128,
+    "bf16_tensors": 2047,
+    "dtype_counts": {
+      "BF16": 2047,
+      "F8_E4M3": 128
+    },
+    "fp8_e4m3_target_weights": 128,
+    "fp8_target_weight_names": 128,
+    "indexed_parameters": 5575240512,
+    "indexed_tensors": 2175,
+    "indexed_weight_bytes": 7929255872,
+    "non_target_mismatches": 0,
+    "original_non_target_tensors_checked": 1919,
+    "protected_scale_tensors": 0,
+    "safetensor_shards": 2
+  },
+  "artifact_path": "/home/morpheus/data/models/hf/shisa-ai/shisa-asr-v0.97-fp8-dynamic",
+  "generated_at_utc": "2026-09-29T04:36:48Z",
+  "mismatch_examples": [],
+  "output_repo_id": "shisa-ai/shisa-asr-v0.97-FP8",
+  "private": true,
+  "script": {
+    "git_dirty": true,
+    "git_revision": "a2c77f0bbb7f09dc6cdf50ed7cc6fc61d9ab1464",
+    "github_repo": "https://github.com/shisa-ai/quantize",
+    "github_url": "https://github.com/shisa-ai/quantize/blob/a2c77f0bbb7f09dc6cdf50ed7cc6fc61d9ab1464/shisa-asr/validate_fp8_artifact.py",
+    "relative_path": "shisa-asr/validate_fp8_artifact.py"
+  },
+  "source_indexed_tensors": 2047,
+  "source_path": "/home/morpheus/data/models/hf/shisa-ai/shisa-asr-v0.97",
+  "tool_versions": {
+    "accelerate": "1.12.0",
+    "compressed-tensors": "0.14.0.1",
+    "huggingface-hub": "0.36.2",
+    "llmcompressor": "0.10.0.3",
+    "safetensors": "0.8.0",
+    "torch": "2.10.0+cu128",
+    "transformers": "4.57.6"
+  }
+}

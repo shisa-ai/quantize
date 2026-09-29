@@ -22,12 +22,15 @@ Most scripts use [shisa-ai/shisa-v2-sharegpt](https://huggingface.co/datasets/sh
 
 ### `shisa-asr/`
 
-Phi4MM ASR decoder-only FP8 export tooling. The current script is pinned to
-`shisa-ai/shisa-asr-v0.95b` and supports header-only scope inspection plus
+Phi4MM ASR decoder-only FP8 export tooling. The current target is
+`shisa-ai/shisa-asr-v0.97`; the published lineage is
+`shisa-ai/shisa-asr-v0.95b-FP8`. Supports header-only scope inspection plus
 `FP8_DYNAMIC` and `FP8_BLOCK` compressed-tensors exports while preserving the
 multimodal towers and LoRA tensors.
 
-- `quantize_decoder_fp8.py` - validated v0.95b exporter and vLLM target rewrite
+- `quantize_decoder_fp8.py` - validated exporter and vLLM target rewrite
+- `validate_fp8_artifact.py` - integrity and provenance verification for an
+  export against its source checkpoint
 - `README.md` - exact environment, reproduction commands, artifact checks, and
   publication TODOs
 
